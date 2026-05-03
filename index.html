@@ -2,12 +2,12 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="frame-src https://www.youtube-nocookie.com https://www.youtube.com;">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nariliev | Portfolio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://www.youtube.com/iframe_api"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -259,38 +259,20 @@
     </div>
 </div>
     <script>
-let currentPlayer = null; // Храним плеер
-let currentVideoId = null;
+let playerIframe = null;
+let openModalTimer = null;
 
 function openModal(id, desc, isVertical) {
     const modal = document.getElementById('modal');
     const box = document.getElementById('mBox');
-    const previewContainer = document.getElementById('previewContainer');
-    const previewImg = document.getElementById('previewImg');
-    const playerContainer = document.getElementById('playerContainer');
+    const container = document.getElementById('pContainer');
     const ytLink = document.getElementById('ytLink');
     const mDesc = document.getElementById('mDesc');
 
-    // Прячем плеер, показываем превью
-    playerContainer.classList.add('hidden');
-    previewContainer.classList.remove('hidden');
-    
-    // Останавливаем предыдущий плеер, если был
-    if (currentPlayer) {
-        currentPlayer.destroy();
-        currentPlayer = null;
-    }
+    // Сначала показываем модалку с пустым контейнером (можно оставить фон)
+    container.innerHTML = ''; // очищаем предыдущий плеер, если был
 
-    currentVideoId = id;
-
-    // Ставим картинку превью (максимальное качество)
-    previewImg.src = `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
-    previewImg.onerror = () => {
-        // fallback, если maxresdefault не загрузился
-        previewImg.src = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
-    };
-
-    // Описание
+    // Обновляем описание и ссылку
     mDesc.innerText = desc;
     ytLink.href = `https://www.youtube.com/watch?v=${id}`;
 
@@ -298,75 +280,52 @@ function openModal(id, desc, isVertical) {
     if (isVertical) box.classList.add('is-vertical');
     else box.classList.remove('is-vertical');
 
+    // Показываем модалку
     modal.style.display = 'flex';
-    gsap.fromTo(modal, { opacity: 0 }, { opacity: 1, duration: 0.3 });
+    gsap.fromTo(modal, { opacity: 0 }, { opacity: 1, duration: 0.3, onComplete: () => {
+        // ВАЖНО: создаём iframe только ПОСЛЕ полного появления модалки
+        // и с задержкой 100мс — так жест пользователя точно засчитан
+        openModalTimer = setTimeout(() => {
+            createPlayer(id);
+        }, 100);
+    }});
 }
 
-function initPlayer() {
-    const previewContainer = document.getElementById('previewContainer');
-    const playerContainer = document.getElementById('playerContainer');
+function createPlayer(id) {
+    const container = document.getElementById('pContainer');
+    // Используем youtube-nocookie.com для обхода куки-проверок
+    const src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&rel=0&playsinline=1&origin=${encodeURIComponent(window.location.origin)}`;
     
-    // Скрываем превью, показываем контейнер плеера
-    previewContainer.classList.add('hidden');
-    playerContainer.classList.remove('hidden');
-
-    // Создаём плеер через API
-    if (currentPlayer) {
-        currentPlayer.destroy();
-    }
-    currentPlayer = new YT.Player('playerContainer', {
-        videoId: currentVideoId,
-        playerVars: {
-            autoplay: 1,
-            rel: 0,
-            mute: 1,        // без звука для автозапуска
-            origin: window.location.origin
-        },
-        events: {
-            'onReady': (event) => {
-                event.target.playVideo(); // гарантированный запуск
-            }
-        }
-    });
+    container.innerHTML = `<iframe 
+        width="100%" 
+        height="100%" 
+        src="${src}" 
+        frameborder="0" 
+        allow="autoplay; encrypted-media; picture-in-picture" 
+        allowfullscreen
+        referrerpolicy="strict-origin-when-cross-origin"
+    ></iframe>`;
 }
-
-// Навешиваем обработчик на кнопку Play (после загрузки DOM)
-document.addEventListener('DOMContentLoaded', function() {
-    const playButton = document.getElementById('playButton');
-    if (playButton) {
-        playButton.addEventListener('click', function(e) {
-            e.stopPropagation();
-            initPlayer();
-        });
-    }
-});
 
 function closeModal() {
     const modal = document.getElementById('modal');
-    const previewContainer = document.getElementById('previewContainer');
-    const playerContainer = document.getElementById('playerContainer');
-    
-    // Уничтожаем плеер
-    if (currentPlayer) {
-        currentPlayer.destroy();
-        currentPlayer = null;
-    }
+    const container = document.getElementById('pContainer');
 
-    // Сбрасываем вид: показываем превью и прячем плеер для следующего открытия
-    previewContainer.classList.remove('hidden');
-    playerContainer.classList.add('hidden');
+    // Сбрасываем таймер, если модалку закрыли до создания плеера
+    if (openModalTimer) {
+        clearTimeout(openModalTimer);
+        openModalTimer = null;
+    }
 
     gsap.to(modal, {
         opacity: 0,
         duration: 0.3,
         onComplete: () => {
             modal.style.display = 'none';
+            container.innerHTML = ''; // Полностью выгружаем iframe
         }
     });
 }
-
-// Глобальная функция, необходимая для YouTube API (она вызовется автоматически)
-window.onYouTubeIframeAPIReady = () => {};
 </script>
 </body>
 </html>
