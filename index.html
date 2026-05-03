@@ -88,40 +88,6 @@
             .modal-box { flex-direction: column; overflow-y: auto; }
             .is-vertical .modal-player-box { flex: none; height: 60vh; }
         }
-        /* МОБИЛЬНЫЙ БЛОК — СРАБОТАЕТ ТОЛЬКО НА ТЕЛЕФОНАХ */
-@media (max-width: 768px) {
-    /* Название сайта */
-    h1 { 
-        font-size: 3.5rem !important; 
-        line-height: 0.9 !important; 
-        margin-top: 40px !important;
-    }
-    .hero-subtitle { font-size: 1.1rem !important; }
-
-    /* Секция "Кто я" */
-    section { margin-bottom: 80px !important; }
-    .section-title { font-size: 2.8rem !important; }
-    p { font-size: 1rem !important; line-height: 1.5 !important; }
-    
-    /* Список достижений */
-    .border-l-4 { 
-        padding-left: 20px !important; 
-        font-size: 0.95rem !important; 
-        margin-bottom: 30px !important;
-    }
-
-    /* Видео и сетка */
-    .grid { gap: 20px !important; }
-    .video-card { border-radius: 16px !important; }
-
-    /* Отключаем десктопные фишки, которые мешают */
-    .star, svg { display: none !important; }
-    
-    /* Модальное окно (плеер) */
-    .modal-box { border-radius: 0 !important; height: 100vh !important; }
-    .modal-info { padding: 20px !important; }
-    .modal-info h3 { font-size: 1.5rem !important; }
-}
     </style>
 </head>
 <body class="px-6">
@@ -231,60 +197,47 @@
         </footer>
     </div>
 
- <div id="modal" onclick="closeModal()">
-    <div class="modal-box" id="mBox" onclick="event.stopPropagation()">
-        <!-- Слева/Сверху: Плеер -->
-        <div class="modal-player-box" id="pContainer"></div>
-        
-        <!-- Справа/Снизу: Информация и кнопки -->
-        <div class="modal-info">
-            <h3 class="text-2xl md:text-3xl font-bold uppercase mb-4 text-green-400 tracking-wider">Детали</h3>
-            <p id="mDesc" class="text-base md:text-lg opacity-80 italic leading-relaxed mb-6"></p>
-            
-            <p class="text-[10px] opacity-40 uppercase tracking-widest mb-3">Если плеер не загружается:</p>
-            
-            <!-- ТА САМАЯ КНОПКА -->
-            <a id="ytLink" href="#" target="_blank" class="inline-flex items-center gap-2 text-[11px] font-bold border border-white/20 px-5 py-3 rounded-xl hover:bg-red-600 hover:border-red-600 transition-all uppercase mb-10">
-                <span class="text-red-500">●</span> Смотреть на YouTube
-            </a>
-
-            <br>
-            <button onclick="closeModal()" class="text-[10px] font-bold opacity-50 hover:opacity-100 transition-all uppercase underline tracking-widest">
-                Закрыть окно
-            </button>
+    <!-- Модальное окно -->
+    <div id="modal" onclick="closeModal()">
+        <div class="modal-box" id="mBox" onclick="event.stopPropagation()">
+            <div class="modal-player-box" id="pContainer"></div>
+            <div class="modal-info">
+                <h3 class="text-3xl font-bold uppercase mb-6 text-green-400 tracking-wider">Детали</h3>
+                <p id="mDesc" class="text-xl opacity-80 italic leading-relaxed"></p>
+                <button onclick="closeModal()" class="mt-12 text-[11px] tracking-[0.2em] font-bold border border-white/20 px-10 py-4 rounded-full hover:bg-white hover:text-black transition-all uppercase">Закрыть</button>
+            </div>
         </div>
     </div>
-</div>
 
     <script>
-function openModal(id, desc, isVertical) {
-    const modal = document.getElementById('modal');
-    const box = document.getElementById('mBox');
-    const container = document.getElementById('pContainer');
-    const mDesc = document.getElementById('mDesc');
-    const ytLink = document.getElementById('ytLink');
+    function openModal(id, desc, isVertical) {
+        const modal = document.getElementById('modal');
+        const box = document.getElementById('mBox');
+        const container = document.getElementById('pContainer');
+        const descEl = document.getElementById('mDesc');
 
-    // 1. Создаем свежий iframe (решает проблему с зависанием видео)
-    container.innerHTML = <iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id}?autoplay=1&rel=0" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>;
-    
-    // 2. Обновляем текст описания
-    if (mDesc) mDesc.innerText = desc;
+        // Генерируем новый iframe каждый раз с уникальным ключом, чтобы браузер не кэшировал ошибку
+        container.innerHTML = `
+            <iframe 
+                id="yt-player"
+                width="100%" 
+                height="100%" 
+                src="https://www.youtube.com/embed/${id}?autoplay=1&rel=0&enablejsapi=1" 
+                frameborder="0" 
+                allow="autoplay; encrypted-media; gyroscope; picture-in-picture" 
+                allowfullscreen>
+            </iframe>`;
+        
+        descEl.innerText = desc;
 
-    // 3. Обновляем ссылку на Ютуб (БЕЗОПАСНО: если кнопки нет, ошибки не будет)
-    if (ytLink) {
-        ytLink.href = https://www.youtube.com/watch?v=${id};
+        if (isVertical) box.classList.add('is-vertical');
+        else box.classList.remove('is-vertical');
+
+        modal.style.display = 'flex';
+        gsap.fromTo(modal, {opacity: 0}, {opacity: 1, duration: 0.4});
+        gsap.fromTo(box, {scale: 0.9, y: 20}, {scale: 1, y: 0, duration: 0.5, ease: "back.out(1.7)"});
     }
 
-    // 4. Настраиваем ориентацию (вертикальная для Reels)
-    if (isVertical) box.classList.add('is-vertical');
-    else box.classList.remove('is-vertical');
-
-    // 5. Показываем окно
-    modal.style.display = 'flex';
-    if (window.gsap) {
-        gsap.fromTo(modal, {opacity: 0}, {opacity: 1, duration: 0.3});
-    }
-}
     function closeModal() {
         const modal = document.getElementById('modal');
         const container = document.getElementById('pContainer');
@@ -298,4 +251,3 @@ function openModal(id, desc, isVertical) {
 </script>
 </body>
 </html>
-
