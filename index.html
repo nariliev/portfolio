@@ -225,34 +225,37 @@
     </div>
 
     <!-- Модальное окно -->
-    <div id="modal" onclick="closeModal()">
-        <div class="modal-box" id="mBox" onclick="event.stopPropagation()">
-            <div class="modal-player-box" id="pContainer"></div>
-           <div class="modal-info">
-    <h3 class="text-2xl font-bold uppercase mb-4 text-green-400">Детали</h3>
-    <p id="mDesc" class="text-base opacity-80 italic mb-8"></p>
-    
-    <!-- Минималистичный блок с кнопкой YouTube -->
-    <div style="border-top: 1px solid rgba(255,255,255,0.1); pt-6">
-        <p style="font-size: 10px; opacity: 0.4; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; margin-top: 20px;">
-            Если плеер не загрузился:
-        </p>
-        <!-- Округлая кнопка "Смотреть на YouTube" в зелёных тонах -->
-        <a id="ytLink" href="#" target="_blank" 
-           class="inline-flex items-center justify-center w-full rounded-full border border-green-500 text-green-400 px-6 py-3 text-xs font-bold uppercase tracking-wider hover:bg-green-500 hover:text-white transition-all">
-            Смотреть на YouTube
-        </a>
-    </div>
+    <<div id="modal" onclick="closeModal()">
+    <div class="modal-box" id="mBox" onclick="event.stopPropagation()">
+        <!-- Контейнер для видео -->
+        <div class="modal-player-box" id="pContainer"></div>
+        
+        <!-- Инфо-блок -->
+        <div class="modal-info">
+            <h3 class="text-2xl font-bold uppercase mb-2 text-green-400">Детали</h3>
+            <p id="mDesc" class="text-sm opacity-70 italic mb-6"></p>
+            
+            <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px;">
+                <p style="font-size: 9px; opacity: 0.3; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px;">
+                    Если плеер не загрузился
+                </p>
+                
+                <!-- Новая зеленая округлая кнопка -->
+                <a id="ytLink" href="#" target="_blank" 
+                   style="display: inline-flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 10px 20px; border-radius: 50px; text-transform: uppercase; transition: all 0.3s ease; text-decoration: none;">
+                    <span style="width: 6px; height: 6px; background: #10b981; border-radius: 50%;"></span>
+                    Смотреть на YouTube
+                </a>
+            </div>
 
-    <!-- Округлая кнопка "Закрыть" на всю ширину -->
-    <button onclick="closeModal()" 
-            class="mt-6 w-full rounded-full border border-white/20 px-6 py-3 text-xs uppercase tracking-widest text-white/50 hover:text-white hover:border-white/60 transition-all block text-center bg-transparent cursor-pointer">
-        Закрыть
-    </button>
-</div>
+            <!-- Кнопка закрыть как раньше -->
+            <button onclick="closeModal()" 
+                    style="margin-top: 30px; font-size: 10px; font-weight: 700; opacity: 0.4; text-transform: uppercase; text-decoration: underline; letter-spacing: 1px; border: none; background: none; color: white; cursor: pointer;">
+                Закрыть
+            </button>
         </div>
     </div>
-
+</div>
     <script>
   function openModal(id, desc, isVertical) {
     const modal = document.getElementById('modal');
