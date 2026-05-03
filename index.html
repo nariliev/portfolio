@@ -231,72 +231,60 @@
         </footer>
     </div>
 
-    <!-- Модальное окно -->
-    <div id="modal" onclick="closeModal()">
-        <div class="modal-box" id="mBox" onclick="event.stopPropagation()">
-            <div class="modal-player-box" id="pContainer"></div>
-            <div class="modal-info">
-    <!-- Старый заголовок -->
-    <h3 class="text-3xl font-bold uppercase mb-4 text-green-400 tracking-wider">Детали</h3>
-    
-    <!-- Старое описание (текст подставится из скрипта) -->
-    <p id="mDesc" class="text-lg opacity-80 italic leading-relaxed mb-6"></p>
-    
-    <!-- Новая часть: Текст-подстраховка -->
-    <p class="text-[10px] opacity-40 uppercase tracking-widest mb-3">
-        Если плеер не отображается:
-    </p>
-    
-    <!-- Новая часть: Кнопка перехода на Ютуб -->
-    <a id="ytLink" href="#" target="_blank" class="inline-flex items-center gap-2 text-[11px] font-bold border border-white/20 px-4 py-2 rounded-lg hover:bg-red-600 hover:border-red-600 transition-all uppercase mb-8">
-        <span class="text-red-500">●</span> Смотреть на YouTube
-    </a>
+ <div id="modal" onclick="closeModal()">
+    <div class="modal-box" id="mBox" onclick="event.stopPropagation()">
+        <!-- Слева/Сверху: Плеер -->
+        <div class="modal-player-box" id="pContainer"></div>
+        
+        <!-- Справа/Снизу: Информация и кнопки -->
+        <div class="modal-info">
+            <h3 class="text-2xl md:text-3xl font-bold uppercase mb-4 text-green-400 tracking-wider">Детали</h3>
+            <p id="mDesc" class="text-base md:text-lg opacity-80 italic leading-relaxed mb-6"></p>
+            
+            <p class="text-[10px] opacity-40 uppercase tracking-widest mb-3">Если плеер не загружается:</p>
+            
+            <!-- ТА САМАЯ КНОПКА -->
+            <a id="ytLink" href="#" target="_blank" class="inline-flex items-center gap-2 text-[11px] font-bold border border-white/20 px-5 py-3 rounded-xl hover:bg-red-600 hover:border-red-600 transition-all uppercase mb-10">
+                <span class="text-red-500">●</span> Смотреть на YouTube
+            </a>
 
-    <br>
-    <!-- Старая кнопка закрытия, просто сделал её чуть аккуратнее -->
-    <button onclick="closeModal()" class="text-[10px] font-bold opacity-60 hover:opacity-100 transition-all uppercase underline tracking-tighter">
-        Вернуться назад
-    </button>
-</div>
+            <br>
+            <button onclick="closeModal()" class="text-[10px] font-bold opacity-50 hover:opacity-100 transition-all uppercase underline tracking-widest">
+                Закрыть окно
+            </button>
         </div>
     </div>
+</div>
 
     <script>
-   function openModal(id, desc, isVertical) {
+function openModal(id, desc, isVertical) {
     const modal = document.getElementById('modal');
     const box = document.getElementById('mBox');
     const container = document.getElementById('pContainer');
+    const mDesc = document.getElementById('mDesc');
     const ytLink = document.getElementById('ytLink');
-    
-    // 1. Генерируем абсолютно новый iframe при каждом клике
-    // Это гарантирует, что видео загрузится с нуля без кэшированных ошибок
-    container.innerHTML = `
-        <iframe 
-            width="100%" 
-            height="100%" 
-            src="https://www.youtube.com/embed/${id}?autoplay=1&rel=0" 
-            frameborder="0" 
-            allow="autoplay; encrypted-media; picture-in-picture" 
-            allowfullscreen>
-        </iframe>`;
-    
-    // 2. Обновляем описание
-    document.getElementById('mDesc').innerText = desc;
 
-    // 3. Обновляем прямую ссылку для твоей новой кнопки "Смотреть на YouTube"
+    // 1. Создаем свежий iframe (решает проблему с зависанием видео)
+    container.innerHTML = <iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id}?autoplay=1&rel=0" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>;
+    
+    // 2. Обновляем текст описания
+    if (mDesc) mDesc.innerText = desc;
+
+    // 3. Обновляем ссылку на Ютуб (БЕЗОПАСНО: если кнопки нет, ошибки не будет)
     if (ytLink) {
         ytLink.href = https://www.youtube.com/watch?v=${id};
     }
 
-    // 4. Настраиваем вертикальный/горизонтальный вид
+    // 4. Настраиваем ориентацию (вертикальная для Reels)
     if (isVertical) box.classList.add('is-vertical');
     else box.classList.remove('is-vertical');
 
-    // 5. Показываем модалку с анимацией
+    // 5. Показываем окно
     modal.style.display = 'flex';
-    gsap.fromTo(modal, {opacity: 0}, {opacity: 1, duration: 0.3});
+    if (window.gsap) {
+        gsap.fromTo(modal, {opacity: 0}, {opacity: 1, duration: 0.3});
+    }
 }
-
     function closeModal() {
         const modal = document.getElementById('modal');
         const container = document.getElementById('pContainer');
