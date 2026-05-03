@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -223,14 +224,24 @@
             <p class="mt-4 opacity-20 text-sm">© 2026 Nariliev Editing. All Rights Reserved.</p>
         </footer>
     </div>
-
-   <div id="modal" onclick="closeModal()">
+ <div id="modal" onclick="closeModal()">
     <div class="modal-box" id="mBox" onclick="event.stopPropagation()">
-        <div class="modal-player-box" id="pContainer"></div>
+        <div class="modal-player-box" id="pContainer">
+            <!-- Сюда вставится превью с кнопкой Play -->
+            <div id="previewContainer" class="w-full h-full flex items-center justify-center bg-black relative">
+                <img id="previewImg" src="" class="w-full h-full object-cover absolute inset-0" />
+                <div id="playButton" class="absolute z-10 cursor-pointer transition-transform hover:scale-110 bg-green-500 rounded-full w-16 h-16 flex items-center justify-center shadow-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                </div>
+            </div>
+            <!-- Сюда динамически вставится плеер -->
+            <div id="playerContainer" class="w-full h-full hidden"></div>
+        </div>
         <div class="modal-info">
             <h3 class="text-2xl font-bold uppercase mb-4 text-green-400">Детали</h3>
             <p id="mDesc" class="text-base opacity-80 italic mb-8"></p>
-
             <div style="border-top: 1px solid rgba(255,255,255,0.1);">
                 <p style="font-size: 10px; opacity: 0.4; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; margin-top: 20px;">
                     Если плеер не загрузился:
@@ -240,7 +251,6 @@
                     Смотреть на YouTube
                 </a>
             </div>
-
             <button onclick="closeModal()" 
                     class="mt-6 w-full rounded-full border border-white/20 px-6 py-3 text-xs uppercase tracking-widest text-white/50 hover:text-white hover:border-white/60 transition-all block text-center bg-transparent cursor-pointer">
                 Закрыть
@@ -249,55 +259,114 @@
     </div>
 </div>
     <script>
-  function openModal(id, desc, isVertical) {
+let currentPlayer = null; // Храним плеер
+let currentVideoId = null;
+
+function openModal(id, desc, isVertical) {
     const modal = document.getElementById('modal');
     const box = document.getElementById('mBox');
-    const container = document.getElementById('pContainer');
+    const previewContainer = document.getElementById('previewContainer');
+    const previewImg = document.getElementById('previewImg');
+    const playerContainer = document.getElementById('playerContainer');
     const ytLink = document.getElementById('ytLink');
     const mDesc = document.getElementById('mDesc');
 
-    // 1. ГЕНЕРАЦИЯ НОВОГО IFRAME (ОБЯЗАТЕЛЬНО)
-    container.innerHTML = `<iframe width="100%" height="100%" 
-    src="https://www.youtube.com/embed/${id}?autoplay=0&rel=0&origin=${encodeURIComponent(window.location.origin)}" 
-    frameborder="0" 
-    allow="encrypted-media; picture-in-picture" 
-    referrerpolicy="strict-origin-when-cross-origin" 
-    allowfullscreen>
-</iframe>`;
-    // 2. БЕЗОПАСНОЕ ОБНОВЛЕНИЕ ТЕКСТА
-    if (mDesc) {
-        mDesc.innerText = desc;
+    // Прячем плеер, показываем превью
+    playerContainer.classList.add('hidden');
+    previewContainer.classList.remove('hidden');
+    
+    // Останавливаем предыдущий плеер, если был
+    if (currentPlayer) {
+        currentPlayer.destroy();
+        currentPlayer = null;
     }
 
-    // 3. БЕЗОПАСНАЯ ССЫЛКА НА КНОПКУ
-    if (ytLink) {
-        ytLink.href = `https://www.youtube.com/watch?v=${id}`;
-    }
+    currentVideoId = id;
 
-    // 4. ОРИЕНТАЦИЯ И ПОКАЗ
+    // Ставим картинку превью (максимальное качество)
+    previewImg.src = `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
+    previewImg.onerror = () => {
+        // fallback, если maxresdefault не загрузился
+        previewImg.src = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+    };
+
+    // Описание
+    mDesc.innerText = desc;
+    ytLink.href = `https://www.youtube.com/watch?v=${id}`;
+
+    // Вертикальный режим
     if (isVertical) box.classList.add('is-vertical');
     else box.classList.remove('is-vertical');
 
     modal.style.display = 'flex';
-    if (typeof gsap !== 'undefined') {
-        gsap.fromTo(modal, { opacity: 0 }, { opacity: 1, duration: 0.3 });
-    }
+    gsap.fromTo(modal, { opacity: 0 }, { opacity: 1, duration: 0.3 });
 }
+
+function initPlayer() {
+    const previewContainer = document.getElementById('previewContainer');
+    const playerContainer = document.getElementById('playerContainer');
+    
+    // Скрываем превью, показываем контейнер плеера
+    previewContainer.classList.add('hidden');
+    playerContainer.classList.remove('hidden');
+
+    // Создаём плеер через API
+    if (currentPlayer) {
+        currentPlayer.destroy();
+    }
+    currentPlayer = new YT.Player('playerContainer', {
+        videoId: currentVideoId,
+        playerVars: {
+            autoplay: 1,
+            rel: 0,
+            mute: 1,        // без звука для автозапуска
+            origin: window.location.origin
+        },
+        events: {
+            'onReady': (event) => {
+                event.target.playVideo(); // гарантированный запуск
+            }
+        }
+    });
+}
+
+// Навешиваем обработчик на кнопку Play (после загрузки DOM)
+document.addEventListener('DOMContentLoaded', function() {
+    const playButton = document.getElementById('playButton');
+    if (playButton) {
+        playButton.addEventListener('click', function(e) {
+            e.stopPropagation();
+            initPlayer();
+        });
+    }
+});
 
 function closeModal() {
     const modal = document.getElementById('modal');
-    const container = document.getElementById('pContainer');
+    const previewContainer = document.getElementById('previewContainer');
+    const playerContainer = document.getElementById('playerContainer');
+    
+    // Уничтожаем плеер
+    if (currentPlayer) {
+        currentPlayer.destroy();
+        currentPlayer = null;
+    }
+
+    // Сбрасываем вид: показываем превью и прячем плеер для следующего открытия
+    previewContainer.classList.remove('hidden');
+    playerContainer.classList.add('hidden');
 
     gsap.to(modal, {
         opacity: 0,
         duration: 0.3,
         onComplete: () => {
             modal.style.display = 'none';
-            container.innerHTML = ""; // полностью удаляем iframe, чтобы остановить видео
         }
     });
 }
 
+// Глобальная функция, необходимая для YouTube API (она вызовется автоматически)
+window.onYouTubeIframeAPIReady = () => {};
 </script>
 </body>
 </html>
